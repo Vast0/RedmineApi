@@ -14,14 +14,11 @@ class RedmineApi {
         $this->accessPassword = $accessPassword;
     }
 
-    function run($requet, $method, $body=null) {
+    function run($requet, $method, $body='') {
 
         $curl = curl_init($this->url.$requet);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
-        if ($method !== 'GET' && !empty($body)){
-            curl_setopt($curl, CURLOPT_POSTFIELDS, $body);
-        }
         $httpheader = array(
             'Content-Type: application/json',
             'X-Redmine-API-Key: '.$this->apiKey,
@@ -30,6 +27,22 @@ class RedmineApi {
             $httpheader[] = 'Authorization: Basic '.base64_encode($this->accessUsername.':'.$this->accessPassword);      
         }
         curl_setopt($curl, CURLOPT_HTTPHEADER, $httpheader);
+        switch($method) {
+            case 'POST':
+                curl_setopt($curl, CURLOPT_POST, 1);
+                curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($body));
+                break;
+            case 'DELETE':
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
+                break;
+            case 'PUT':
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
+                curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($body));
+                break;
+            case 'GET':
+            default:
+                break;
+        }
         $result = curl_exec($curl);
         return $result;
     }
